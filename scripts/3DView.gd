@@ -76,6 +76,9 @@ func setShading(shading_):
     reloadLevel();
 
 func applySettings():
+    var map = get_node_or_null("World/Container/Map");
+    if !map:
+        return;
     get_node("World/Container/Map/Skybox").visible = !settings.render.skybox;
     var skyMat = camera.get_node("Camera").environment.sky.sky_material;
     if settings.render.skybox:
@@ -135,7 +138,10 @@ func loadNextMap():
 
 func getConnectedLevels():
     var levelNames = [];
-    for entity in get_node("World/Container/Map").get_children():
+    var map = get_node_or_null("World/Container/Map");
+    if !map:
+        return;
+    for entity in map.get_children():
         if !entity is Entity:
             continue;
         if entity.identifier == "TRIGGER_CHANGELEVEL":

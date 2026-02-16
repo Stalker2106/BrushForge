@@ -45,5 +45,5 @@ func viewButtonPressed(idx):
     get_node("/root/App").view3D.setSetting(keys[0], keys[1], enabled);
     viewDropdown.set_item_checked(idx, enabled);
 
-func aboutButtonPressed(idx):
+func aboutButtonPressed(_idx):
     get_node("/root/App/AboutDialog").visible = true;

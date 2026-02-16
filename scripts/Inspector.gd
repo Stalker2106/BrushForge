@@ -71,4 +71,3 @@ func inspectMesh(collision, collider):
                 #dataLabel.set_text("vs: %v, vt: %v, sShift: %d, tShift: %d" % [texInfo.vs.GetGDVector3(), texInfo.vt.GetGDVector3(), texInfo.sShift, texInfo.tShift]);
         if found:
             break;
-
