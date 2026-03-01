@@ -3,6 +3,7 @@ using Godot.Collections;
 using System;
 using System.IO;
 
+[GlobalClass]
 public partial class Asset : Node
 {
     [Export]
@@ -31,7 +32,7 @@ public partial class Asset : Node
         gdSounds = new Godot.Collections.Dictionary<string, AudioStream>();
     }
 
-    virtual public void Import(FileStream fs, BinaryReader reader, Node app)
+    virtual public void Import(FileStream fs)
     {
     }
     

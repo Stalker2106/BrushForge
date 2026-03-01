@@ -7,14 +7,14 @@
 [ext_resource type="Script" uid="uid://dc711d8cv5wj4" path="res://scripts/3DView.gd" id="4_r574j"]
 [ext_resource type="PackedScene" uid="uid://bqe5vceku10ff" path="res://prefabs/Camera.tscn" id="5_4mito"]
 [ext_resource type="Script" uid="uid://d3c1g0cavihtj" path="res://scripts/TansformGizmo.gd" id="6_4186l"]
-[ext_resource type="Texture2D" uid="uid://c3l2jlbt4fvbm" path="res://assets/Wireframe.png" id="7_w2248"]
-[ext_resource type="Texture2D" uid="uid://xiffgpg61xpa" path="res://assets/Shaded.png" id="8_rngdq"]
-[ext_resource type="Texture2D" uid="uid://d3xhssevy46uo" path="res://assets/Texturized.png" id="9_6ln17"]
-[ext_resource type="PackedScene" uid="uid://d4g3aeu7mo0v3" path="res://assets/TransformGIzmo.glb" id="10_p7x03"]
-[ext_resource type="Texture2D" uid="uid://d3claeraj5wk4" path="res://assets/crosshair.png" id="11_862x4"]
+[ext_resource type="Texture2D" uid="uid://c3l2jlbt4fvbm" path="res://sprites/Wireframe.png" id="7_w2248"]
+[ext_resource type="Texture2D" uid="uid://xiffgpg61xpa" path="res://sprites/Shaded.png" id="8_rngdq"]
+[ext_resource type="Texture2D" uid="uid://d3xhssevy46uo" path="res://sprites/Texturized.png" id="9_6ln17"]
+[ext_resource type="PackedScene" uid="uid://d4g3aeu7mo0v3" path="res://sprites/TransformGIzmo.glb" id="10_p7x03"]
+[ext_resource type="Texture2D" uid="uid://d3claeraj5wk4" path="res://sprites/crosshair.png" id="11_862x4"]
 [ext_resource type="Script" uid="uid://bnuxv3m2vxw4y" path="res://scripts/Inspector.gd" id="13_ortvp"]
-[ext_resource type="Texture2D" uid="uid://ct6krfvslra0v" path="res://assets/BrushForgeFull.png" id="14_eu4wb"]
-[ext_resource type="Texture2D" uid="uid://cwygddmmj18jr" path="res://assets/Missing.png" id="15_wk7mf"]
+[ext_resource type="Texture2D" uid="uid://ct6krfvslra0v" path="res://sprites/BrushForgeFull.png" id="14_eu4wb"]
+[ext_resource type="Texture2D" uid="uid://cwygddmmj18jr" path="res://sprites/Missing.png" id="15_wk7mf"]
 [ext_resource type="PackedScene" uid="uid://ndjisg7fxapk" path="res://prefabs/FileContentDialog.tscn" id="16_rmtiy"]
 [ext_resource type="Script" uid="uid://csfrr0mhlok0" path="res://scripts/InfoOverlay.gd" id="17_o6b1d"]
 [ext_resource type="Script" uid="uid://bjajrmvgptxok" path="res://scripts/PreferencesDialog.gd" id="17_xp1au"]
@@ -185,7 +185,7 @@ handle_input_locally = false
 size = Vector2i(100, 100)
 render_target_update_mode = 4
 
-[node name="Gizmo" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/TansformGizmo/World" unique_id=464387727 instance=ExtResource("10_p7x03")]
+[node name="Gizmo" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/TansformGizmo/World" unique_id=1479886486 instance=ExtResource("10_p7x03")]
 
 [node name="Camera" type="Camera3D" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/TansformGizmo/World" unique_id=1286373103]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.85)
@@ -260,6 +260,7 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 300)
 layout_mode = 2
 texture = ExtResource("15_wk7mf")
+expand_mode = 1
 stretch_mode = 5
 
 [node name="IdentifierLabel" type="Label" parent="Layout/CenterLayout/TabContainer/Inspector/ScrollContainer/Layout" unique_id=696228489]

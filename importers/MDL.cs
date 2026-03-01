@@ -453,7 +453,7 @@ public partial class MDL : DataPack
                 }
                 if (texture == null) //No file matched, apply missingTex
                 {
-                    texture = GD.Load<Texture2D>("res://assets/NotFound.png");
+                    texture = GD.Load<Texture2D>("res://sprites/NotFound.png");
                 }
             }
             else // Texture embedded here
@@ -671,8 +671,9 @@ public partial class MDL : DataPack
         }
     }
 
-    override public void Import(FileStream fs, BinaryReader reader, Node app)
+    override public void Import(FileStream fs)
     {
+        BinaryReader reader = new BinaryReader(fs);
         // Parse header
         header = new Header(fs, reader);
         // Parse textures

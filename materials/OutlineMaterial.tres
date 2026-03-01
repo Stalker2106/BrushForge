@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://bwqoiepa0b307"]
+
+[ext_resource type="Shader" uid="uid://x3ktgnx70i8t" path="res://shaders/outline.gdshader" id="1_0j4ag"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_0j4ag")
+shader_parameter/flash_color = Color(1, 1, 0, 1)
+shader_parameter/flash_speed = 0.80000003474012
+shader_parameter/flash_intensity = 0.5

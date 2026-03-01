@@ -5,7 +5,7 @@ signal dependencies_loaded;
 const FileEntryPrefab = preload("res://prefabs/FileEntry.tscn");
 const Metadata = preload("res://importers/Metadata.cs");
 
-var files = [];
+var files : Array[Asset] = [];
 
 var filesTree;
 
@@ -94,7 +94,7 @@ func openAsset(filePath, parent):
     if !importer:
         Log.error("Failed loading file");
         return; #Error loading metadata
-    var asset = importer.ImportAsset(self);
+    var asset : Asset = importer.ImportAsset(self);
     if !asset:
         Log.error("Failed loading file");
         return;
@@ -112,6 +112,8 @@ func openAsset(filePath, parent):
     entry.set_tooltip_text(0, asset.path);
     if asset.type == "Pack" && asset.format != "Folder":
         addLevelsToSelect(files.size()-1, asset.GetFileName(), asset.GetLevels());
+    if asset.type == "Pack" && asset.format == "WAD3":
+        view3D.reloadLevel();
     Log.success("Finished");
 
 func unlinkFile(fileId):

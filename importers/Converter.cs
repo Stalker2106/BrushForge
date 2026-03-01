@@ -1,8 +1,6 @@
-﻿using Godot;
+using Godot;
 using NVector3 = System.Numerics.Vector3;
 using NVector4 = System.Numerics.Vector4;
-
-namespace BrushForge;
 
 public static class Extensions
 {
@@ -18,6 +16,11 @@ public static class Extensions
     public static Vector3 ToGodotVector3(this NVector3 v)
     {
         return new Vector3(-v.Y, v.Z, -v.X);
+    }
+    
+    public static Vector3 ToGodotRotation(this Vector3 v)
+    {
+        return new Vector3((Mathf.Pi / 180) * v.Z, (Mathf.Pi / 180) * v.X, (Mathf.Pi / 180) * v.Y);
     }
 
     public static Vector3 ToGodotVector3(this Vector3 v)

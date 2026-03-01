@@ -19,10 +19,11 @@ config/description="WAD, BSP, PK3 Viewer with wide support for engine versions "
 config/version="1.0.0"
 run/main_scene="res://App.tscn"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
+run/max_fps=300
 boot_splash/stretch_mode=0
-boot_splash/image="res://assets/BrushForgeFull.png"
-config/icon="res://assets/BrushForge.png"
-config/windows_native_icon="res://assets/BrushForge.ico"
+boot_splash/image="res://sprites/BrushForgeFull.png"
+config/icon="res://sprites/BrushForge.png"
+config/windows_native_icon="res://sprites/BrushForge.ico"
 
 [audio]
 

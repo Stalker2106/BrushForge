@@ -10,6 +10,7 @@ var crosshair;
 
 var currentLevelMetadata;
 var currentLevelFileId;
+var currentLevelNode;
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -20,16 +21,14 @@ func _ready():
             "skybox": false,
             "lights": true,
             "pointEntities": true,
-            "modelEntities": true,
-            "beams": true
+            "brushEntities": true
         },
         "entities": {
-            "playAudio": true,
-            "runFuncTrain": true
+            "playAudio": true
         },
         "camera": {
             "collisions": false,
-            "gravity": false
+            #"gravity": false
         }
     };
     get_node("/root/App/Layout/CenterLayout/Main/Top/TitleBar/").setButtonStates(settings);
@@ -76,12 +75,13 @@ func setShading(shading_):
     reloadLevel();
 
 func applySettings():
-    var map = get_node_or_null("World/Container/Map");
-    if !map:
+    if !currentLevelNode:
         return;
-    get_node("World/Container/Map/Skybox").visible = !settings.render.skybox;
+    var skyMesh = currentLevelNode.get_node_or_null("Skybox");
+    if skyMesh:
+        skyMesh.visible = !settings.render.skybox;
     var skyMat = camera.get_node("Camera").environment.sky.sky_material;
-    if settings.render.skybox:
+    if settings.render.skybox && false:
         var files = get_node("/root/App").files;
         var cubemapTextures = files[currentLevelFileId].GetSkyCubemapTextures(files);
         skyMat.set_shader_parameter("front", cubemapTextures[0]);
@@ -91,30 +91,28 @@ func applySettings():
         skyMat.set_shader_parameter("top", cubemapTextures[4]);
         skyMat.set_shader_parameter("bottom", cubemapTextures[5]);
     else:
-        var blackPixel = load("res://assets/blackpixel.png");
+        var blackPixel = load("res://sprites/blackpixel.png");
         skyMat.set_shader_parameter("front", blackPixel);
         skyMat.set_shader_parameter("left", blackPixel);
         skyMat.set_shader_parameter("back", blackPixel);
         skyMat.set_shader_parameter("right", blackPixel);
         skyMat.set_shader_parameter("top", blackPixel);
         skyMat.set_shader_parameter("bottom", blackPixel);
-    for entity in get_node("World/Container/Map").get_children():
-        if !entity is Entity:
-            continue;
-        for child in entity.get_children():
-            if child is OmniLight3D:
-                child.visible = settings.render.lights;
-            if child is Beam:
-                child.enabled = settings.render.beams;
-    for path in get_node("World/Container/Map/Paths").get_children():
-        path.get_node("Wagon").enabled = settings.entities.runFuncTrain;
-    #get_node("World/Container/Map/PointEntities").visible = settings.render.pointEntities;
-    #get_node("World/Container/Map/ModelEntities").visible = settings.render.modelEntities;
+    for entity in currentLevelNode.get_children():
+        if entity is OmniLight3D:
+            entity.visible = settings.render.lights;
+        #if entity is Track:
+        #    if settings.render.tracks
+        if entity is CollisionObject3D:
+            entity.visible = settings.render.brushEntities;
+        else:
+            if entity is not OmniLight3D && entity is not SpotLight3D:
+                entity.visible = settings.render.pointEntities;
     camera.get_node("CameraCollider").disabled = !settings.camera.collisions;
-    camera.gravity = settings.camera.gravity;
+    #camera.gravity = settings.camera.gravity;
 
 func hasLevelLoaded():
-    return worldContainer.get_child_count() > 0;
+    return currentLevelNode != null;
 
 func getLevelMetadata():
     return currentLevelMetadata;
@@ -124,11 +122,12 @@ func reloadLevel():
         return;
     if hasLevelLoaded():
         unload();
-    var files = get_node("/root/App").files;
-    var mapNode = files[currentLevelFileId].BuildGDLevel("", shading, files);
-    if (mapNode == null):
+    var levelFile = get_node("/root/App").files[currentLevelFileId];
+    currentLevelNode = levelFile.BuildGDLevel(get_node("/root/App").files, shading);
+    if (currentLevelNode == null):
+        print("Failed to load map");
         return;
-    worldContainer.add_child(mapNode);
+    worldContainer.add_child(currentLevelNode);
     applySettings();
     #get_node("Viewport/World/VoxelGI").bake(get_node("Viewport/World/Container"));
 
@@ -149,9 +148,9 @@ func getConnectedLevels():
     return levelNames;
 
 func unload(clearCache = false):
-    for child in worldContainer.get_children():
-        child.name = child.name+"_d";
-        child.queue_free();
+    currentLevelNode.name+"_d"
+    currentLevelNode.queue_free();
+    currentLevelNode = null;
     if clearCache:
         currentLevelFileId = null;
         currentLevelMetadata = null;
