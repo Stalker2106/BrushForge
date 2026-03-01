@@ -333,7 +333,7 @@ stretch_mode = 6
 [node name="RichTextLabel" type="RichTextLabel" parent="AboutDialog/VBoxContainer" unique_id=1577658314]
 layout_mode = 2
 bbcode_enabled = true
-text = "[center]v1.0.0[/center]
+text = "[center]v1.1.0[/center]
 
 [center]BrushForge is a tool to preview various kind of Quake engine and derivates textures, game resources and levels.
 

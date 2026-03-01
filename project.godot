@@ -16,7 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="BrushForge"
 config/description="WAD, BSP, PK3 Viewer with wide support for engine versions "
-config/version="1.0.0"
+config/version="1.1.0"
 run/main_scene="res://App.tscn"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 run/max_fps=300
