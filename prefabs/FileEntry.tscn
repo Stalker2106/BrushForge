@@ -1,7 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://ceamsiabtfrrj"]
+[gd_scene format=3 uid="uid://ceamsiabtfrrj"]
 
-[ext_resource type="Script" path="res://scripts/FileEntry.gd" id="1_8xsrh"]
-[ext_resource type="Texture2D" uid="uid://gjokmul31vf8" path="res://assets/trash.png" id="1_hl1d1"]
+[ext_resource type="Script" uid="uid://dsdfekde3p7q" path="res://scripts/FileEntry.gd" id="1_8xsrh"]
+[ext_resource type="Texture2D" uid="uid://gjokmul31vf8" path="res://sprites/trash.png" id="1_hl1d1"]
 
 [node name="WadEntry" type="HBoxContainer"]
 offset_right = 214.0

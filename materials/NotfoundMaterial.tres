@@ -1,6 +1,6 @@
-[gd_resource type="StandardMaterial3D" load_steps=7 format=3 uid="uid://dkgja6tywpjf0"]
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://dkgja6tywpjf0"]
 
-[ext_resource type="Texture2D" uid="uid://ca745gau4pb2f" path="res://assets/NotFound.png" id="1_yxhpd"]
+[ext_resource type="Texture2D" uid="uid://ca745gau4pb2f" path="res://sprites/NotFound.png" id="1_yxhpd"]
 [ext_resource type="Material" uid="uid://b0qctcc74a8tb" path="res://materials/FaceSelectedMaterial.tres" id="2_sm0i0"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_nw3kg"]

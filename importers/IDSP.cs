@@ -50,8 +50,9 @@ public partial class IDSP : Asset
             data = reader.ReadBytes((int)(width * height));
         }
     }
-    override public void Import(FileStream fs, BinaryReader reader, Node app)
+    override public void Import(FileStream fs)
     {
+        BinaryReader reader = new BinaryReader(fs);
         header = new Header(fs, reader);
         // Read palette
         UInt16 paletteSize = reader.ReadUInt16();

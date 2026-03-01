@@ -20,18 +20,20 @@ public partial class Metadata : Node
     public string LocateInstall()
     {
         string steamInstallPath = null;
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (OS.HasFeature("windows")) {
             steamInstallPath = (Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Valve\\Steam", "InstallPath", null) as string).Replace("\\", "/");
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        } else if (OS.HasFeature("macos")) {
             steamInstallPath = System.Environment.GetEnvironmentVariable("HOME") + "/Library/Application\\ Support/Steam";
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        } else if (OS.HasFeature("linux")) {
             steamInstallPath = System.Environment.GetEnvironmentVariable("HOME") + "/.local/share/Steam";
+        }
         if (steamInstallPath == null)
         {
             return null;
         }
         return steamInstallPath + "/steamapps/common/Half-Life";
     }
+
     public void Discover(string filePath)
     {
         path = filePath;
@@ -40,7 +42,7 @@ public partial class Metadata : Node
         {
             if (path.EndsWith(nativeExt))
             {
-                magic = "BUILTINTEXTURE";  // Texture ype supported natively
+                magic = "BUILTINTEXTURE";  // Texture type supported natively
                 return;
             }
         }
@@ -111,7 +113,7 @@ public partial class Metadata : Node
                         asset = new GoldSrcBSP();
                         SetMetadata(asset);
                         fs.Seek(0, SeekOrigin.Begin);
-                        asset.Import(fs, reader, app);
+                        asset.Import(fs);
                         asset.type = "Pack";
                         asset.format = "GoldSrc BSP";
                         break;
@@ -122,7 +124,7 @@ public partial class Metadata : Node
             case "WAD3":
                 asset = new WAD3();
                 SetMetadata(asset);
-                asset.Import(fs, reader, app);
+                asset.Import(fs);
                 asset.type = "Pack";
                 asset.format = "WAD3";
                 break;
@@ -132,7 +134,7 @@ public partial class Metadata : Node
                     case 10:
                         asset = new MDL();
                         SetMetadata(asset);
-                        asset.Import(fs, reader, app);
+                        asset.Import(fs);
                         asset.type = "Model";
                         asset.format = "GoldSrc MDL";
                         break;
@@ -144,7 +146,7 @@ public partial class Metadata : Node
                     case 2:
                         asset = new IDSP();
                         SetMetadata(asset);
-                        asset.Import(fs, reader, app);
+                        asset.Import(fs);
                         asset.type = "Texture";
                         asset.format = "GoldSrc SPR";
                         break;

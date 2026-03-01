@@ -1,0 +1,716 @@
+using Godot;
+using Godot.Collections;
+using System;
+using System.IO;
+using Sledge.Formats.Bsp;
+using Sledge.Formats.Bsp.Objects;
+using Sledge.Formats.Bsp.Lumps;
+using Sledge.Formats.Id;
+using BrushForge;
+
+public partial class GoldSrcBSP : DataPack
+{
+    //1 is world, 2 are player world colliders, 4 (8 in bin) are projectiles
+    const uint WorldCollisionLayer = 1;
+    const uint PlayerCollisionLayer = 2;
+    const uint ProjectilesCollisionLayer = 8;
+    
+    private string skyName;
+    private Vector3 startOrigin;
+
+    private GEntity[] entities;
+    private ComputedFace[] faces;
+    public BspFile bsp;
+    
+    public Dictionary<int, String> modelsClassName;
+
+    public partial class GEntity : GodotObject
+    {
+        public Entity bspEntity;
+
+        public GEntity(Entity entity)
+        {
+            bspEntity = entity;
+        }
+
+        public Dictionary<string, Variant> GetFields()
+        {
+            Dictionary<string, Variant> dict = new Dictionary<string, Variant>();
+            foreach (System.Collections.Generic.KeyValuePair<string, string> entry in bspEntity.KeyValues)
+                dict[entry.Key] = entry.Value;
+            return dict;
+        }
+
+        //Passthrough
+        public string ClassName { get { return bspEntity.ClassName; } set { bspEntity.ClassName = value; } }
+        public T Get<T>(string key, T defaultValue)
+        {
+            return bspEntity.Get<T>(key, defaultValue);
+        }
+    }
+
+    public partial class LightmapBuilder : GodotObject
+    {
+        private const int BytesPerPixel = 3;
+
+        public int Width { get; }
+        public int Height { get; private set; }
+        public System.Drawing.Rectangle FullbrightRectangle { get; }
+
+        private byte[] _data;
+        public byte[] Data => _data;
+
+        private int _currentX;
+        private int _currentY;
+        private int _currentRowHeight;
+
+        public LightmapBuilder(int initialWidth = 256, int initialHeight = 32)
+        {
+            _data = new byte[initialWidth * initialHeight * BytesPerPixel];
+            Width = initialWidth;
+            Height = initialHeight;
+            _currentX = 0;
+            _currentY = 0;
+            _currentRowHeight = 2;
+
+            // (0, 0) is fullbright
+            FullbrightRectangle = Allocate(1, 1, new[] { byte.MaxValue, byte.MaxValue, byte.MaxValue }, 0);
+        }
+
+        public System.Drawing.Rectangle Allocate(int width, int height, byte[] data, int index)
+        {
+            if (_currentX + width > Width) NewRow();
+            if (_currentY + height > Height) Expand();
+
+            for (var i = 0; i < height; i++)
+            {
+                var start = (_currentY + i) * (Width * BytesPerPixel) + _currentX * BytesPerPixel;
+                System.Array.Copy(data, width * i * BytesPerPixel + index, _data, start, width * BytesPerPixel);
+            }
+
+            var x = _currentX;
+            var y = _currentY;
+
+            _currentX += width + 2;
+            _currentRowHeight = Math.Max(_currentRowHeight, height + 2);
+
+            return new System.Drawing.Rectangle(x, y, width, height);
+        }
+
+        private void NewRow()
+        {
+            _currentX = 0;
+            _currentY += _currentRowHeight;
+            _currentRowHeight = 2;
+        }
+
+        private void Expand()
+        {
+            Height *= 2;
+            System.Array.Resize(ref _data, Width * Height * BytesPerPixel);
+        }
+    }
+
+    public partial class ComputedFace : GodotObject
+    {
+        public const float UNIT_SCALE = 1.0f / 32.0f;
+
+        public Face bspFace;
+
+        public Vector2[] faceUVs;
+        public Vector2[] lightmapUVs;
+
+        public Texture2D lightmapTexture;
+
+        public System.Drawing.Rectangle alloc;
+
+        public ComputedFace(BspFile bsp, int faceId, LightmapBuilder builder)
+        {
+            bspFace = bsp.Faces[faceId];
+            // No lightmap
+            if (bspFace.LightmapOffset < 0 || bspFace.Styles[0] == byte.MaxValue) return;
+
+            Vector2[] rawUVs = new Vector2[bspFace.NumEdges];
+            faceUVs = new Vector2[bspFace.NumEdges];
+            lightmapUVs = new Vector2[bspFace.NumEdges];
+            Vector2 fmins = new Vector2(float.MaxValue, float.MaxValue);
+            Vector2 fmaxs = new Vector2(float.MinValue, float.MinValue);
+
+            // Generate texture coordinates for face
+            TextureInfo texinfo = bsp.Texinfo[bspFace.TextureInfo];
+            MipTexture texture = bsp.Textures[texinfo.MipTexture];
+            for (int edgeN = 0; edgeN < bspFace.NumEdges; edgeN++)
+            {
+                int surfedge = bsp.Surfedges[bspFace.FirstEdge + edgeN];
+                Edge edge = bsp.Edges[Math.Abs(surfedge)];
+                Vector3 vertex = bsp.Vertices[surfedge > 0 ? edge.Start : edge.End].ToGodotVector3();
+                rawUVs[edgeN] = new Vector2(
+                    vertex.Dot(texinfo.S.ToGodotVector3()) + texinfo.S.W,
+                    vertex.Dot(texinfo.T.ToGodotVector3()) + texinfo.T.W
+                );
+                // For faces, we need to apply texture scale to uvs.
+                faceUVs[edgeN] = new Vector2(rawUVs[edgeN].X / texture.Width, rawUVs[edgeN].Y / texture.Height);
+                lightmapUVs[edgeN] = rawUVs[edgeN].Floor();
+                // We then extract min and max out of the floored values
+                if (rawUVs[edgeN].X < fmins.X) fmins.X = rawUVs[edgeN].X;
+                if (rawUVs[edgeN].X > fmaxs.X) fmaxs.X = rawUVs[edgeN].X;
+                if (rawUVs[edgeN].Y < fmins.Y) fmins.Y = rawUVs[edgeN].Y;
+                if (rawUVs[edgeN].Y > fmaxs.Y) fmaxs.Y = rawUVs[edgeN].Y;
+            }
+
+            // Compute lightmap size
+            var fcmaxs = (fmaxs / 16.0f).Ceil();
+            var ffmins = (fmins / 16.0f).Floor();
+            Vector2I lightmapSize = ((Vector2I)fcmaxs - (Vector2I)ffmins) + new Vector2I(1, 1);
+
+            // Load texture from rawLightmap
+            alloc = builder.Allocate(lightmapSize.X, lightmapSize.Y, bsp.Lightmaps.RawLightmapData, bspFace.LightmapOffset);
+            /*var lightmapData = new Byte[lightmapSize.X * lightmapSize.Y * 3];
+            System.Array.Copy(bsp.Lightmaps.RawLightmapData, bspFace.LightmapOffset, lightmapData, 0, lightmapSize.X * lightmapSize.Y * 3);
+            Image img = Image.CreateFromData(lightmapSize.X, lightmapSize.Y, false, Image.Format.Rgb8, lightmapData);
+            lightmapTexture = ImageTexture.CreateFromImage(img);*/
+
+            // Compute lightmap UV
+            for (int edge = 0; edge < bspFace.NumEdges; edge++)
+            {
+                lightmapUVs[edge] = (rawUVs[edge] - fmins) / (fmaxs - fmins);
+            }
+        }
+
+        /* build trifan */
+        public Vector3[] BuildTriFanVertices(BspFile bsp)
+        {
+            Vector3[] triFanVertices = new Vector3[bspFace.NumEdges];
+            triFanVertices = new Vector3[bspFace.NumEdges];
+            for (int edgeN = 0; edgeN < bspFace.NumEdges; edgeN++)
+            {
+                int surfedge = bsp.Surfedges[bspFace.FirstEdge + edgeN];
+                Edge edge = bsp.Edges[Math.Abs(surfedge)];
+                triFanVertices[edgeN] = bsp.Vertices[surfedge >= 0 ? edge.Start : edge.End].ToSGodotVector3();
+            }
+            return triFanVertices;
+        }
+
+        public void Final(LightmapBuilder builder)
+        {
+            var lightmapWidth = builder.Width;
+            var lightmapHeight = builder.Height;
+            // Compute lightmap UV
+            for (int edge = 0; edge < bspFace.NumEdges; edge++)
+            {
+                lightmapUVs[edge] = new Vector2(
+                    (alloc.X + 0.5f) / lightmapWidth + (lightmapUVs[edge].X * (alloc.Width - 1)) / lightmapWidth,
+                    (alloc.Y + 0.5f) / lightmapHeight + (lightmapUVs[edge].Y * (alloc.Height - 1)) / lightmapHeight
+                );
+            }
+        }
+    }
+
+    public ComputedFace GetFaceFromTriangle(Vector3 v1, Vector3 v2, Vector3 v3)
+    {
+        foreach (ComputedFace face in faces)
+        {
+            int found = 0;
+            for (int edgeN = 0; edgeN < face.bspFace.NumEdges; edgeN++)
+            {
+                int surfedge = bsp.Surfedges[face.bspFace.FirstEdge + edgeN];
+                Edge edge = bsp.Edges[Math.Abs(surfedge)];
+                Vector3 vertex = bsp.Vertices[surfedge > 0 ? edge.Start : edge.End].ToGodotVector3();
+                if (vertex.IsEqualApprox(v1) || vertex.IsEqualApprox(v2) || vertex.IsEqualApprox(v3))
+                    found += 1;
+            }
+            if (found == 3)
+                return face;
+        }
+        return null;
+    }
+
+    override public void Import(FileStream fs, BinaryReader reader, Godot.Node app)
+    {
+        bsp = new BspFile(fs);
+
+        entities = new GEntity[bsp.Entities.Count];
+        for (int ent = 0; ent < bsp.Entities.Count; ent++)
+        {
+            entities[ent] = new GEntity(bsp.Entities[ent]);
+        }
+
+        // Build Face UVs & lightmap
+        LightmapBuilder builder = new LightmapBuilder();
+        faces = new ComputedFace[bsp.Faces.Count];
+        for (int faceId = 0; faceId < bsp.Faces.Count; faceId++)
+        {
+            faces[faceId] = new ComputedFace(bsp, faceId, builder);
+        }
+        var builderTex = ImageTexture.CreateFromImage(Image.CreateFromData(builder.Width, builder.Height, false, Image.Format.Rgb8, builder.Data));
+        gdTextures["Lightmap"] = builderTex;
+        for (int faceId = 0; faceId < faces.Length; faceId++)
+        {
+            faces[faceId].Final(builder);
+            faces[faceId].lightmapTexture = builderTex;
+        }
+        // Compute dependencies
+        Array<Asset> files = (Array<Asset>)app.Get("files");
+        foreach (Entity entity in bsp.Entities)
+        {
+            if (entity.ClassName == "WORLDSPAWN")
+            {
+                string[] wads = entity.Get("WAD", "").Replace("QUIVER/", "").Split(';');
+                foreach (string wad in wads)
+                {
+                    bool found = false;
+                    for (int fileId = 0; fileId < files.Count; fileId++)
+                    {
+                        if (files[fileId].path.Contains(wad))
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        dependencies.Add(wad);
+                    }
+                }
+            }
+        }
+    }
+    
+    override public Array<Variant> GetLevels()
+    {
+        return new Array<Variant>() { GetFileName() };
+    }
+    public Vector3 GetLevelStart()
+    {
+        return startOrigin;
+    }
+
+    public Texture2D[] GetSkyCubemapTextures(Array<Asset> files)
+    {
+        string[] cubemapSuffixes = new string[] { "LF", "BK", "RT", "FT", "UP", "DN" };
+        Texture2D[] cubemapTextures = new Texture2D[cubemapSuffixes.Length];
+        for (int i = 0; i < cubemapSuffixes.Length; i++)
+        {
+            for (int fileId = 0; fileId < files.Count; fileId++)
+            {
+                if (files[fileId].gdTextures.ContainsKey(skyName + cubemapSuffixes[i]))
+                {
+                    cubemapTextures[i] = files[fileId].gdTextures[skyName + cubemapSuffixes[i]];
+                    break;
+                }
+            }
+            if (cubemapTextures[i] == null) cubemapTextures[i] = GD.Load<Texture2D>("res://assets/NotFound.png");
+        }
+        return cubemapTextures;
+    }
+    
+    public Node3D CreateBodyNode(ArrayMesh mesh, bool meshVisible, uint collisionLayers)
+    {
+        // Create node
+        StaticBody3D bodyNode = new StaticBody3D();
+        bodyNode.CollisionLayer = collisionLayers; 
+        bodyNode.CollisionMask = collisionLayers;
+        // Generate mesh
+        MeshInstance3D brushMesh = new MeshInstance3D();
+        brushMesh.Mesh = mesh;
+        brushMesh.Name = "Mesh";
+        brushMesh.Visible = meshVisible;
+        bodyNode.AddChild(brushMesh);
+        // Generate Collision
+        CollisionShape3D shape = new CollisionShape3D();
+        shape.Name = "CollisionShape";
+        ConcavePolygonShape3D trimesh = mesh.CreateTrimeshShape();
+        trimesh.BackfaceCollision = true;
+        shape.Shape = trimesh;
+        
+        bodyNode.AddChild(shape);
+        return bodyNode;
+    }
+
+    public Dictionary<string, SurfaceTool> BuildModelFaces(Array<Asset> files, int modelIdx)
+    {
+        StandardMaterial3D NotFoundMaterial = GD.Load<StandardMaterial3D>("res://materials/NotFoundMaterial.tres");
+        Dictionary<string, SurfaceTool> surfaceTools = new Dictionary<string, SurfaceTool>();
+        int faceEnd = bsp.Models[modelIdx].FirstFace + bsp.Models[modelIdx].NumFaces;
+        for (int faceIdx = bsp.Models[modelIdx].FirstFace; faceIdx < faceEnd; faceIdx++)
+        {
+            ComputedFace face = faces[(int)faceIdx];
+            TextureInfo texinfo = bsp.Texinfo[face.bspFace.TextureInfo];
+            MipTexture texture = null;
+            String faceTextureName = Convert.ToString(texinfo.MipTexture);
+            if (texinfo.MipTexture < bsp.Textures.Count)
+            {
+                // In older versions of BSP, there is no texture
+                texture = bsp.Textures[(int)texinfo.MipTexture];
+                // We force lowercase for texture names in both BSP / WAD
+                faceTextureName = texture.Name.ToLower();
+            }
+            // Create one surfaceTool per texture
+            SurfaceTool surfaceTool;
+            if (surfaceTools.ContainsKey(faceTextureName))
+            {
+                surfaceTool = surfaceTools[faceTextureName];
+            }
+            else
+            {
+                // Create faces materials
+                StandardMaterial3D material = new StandardMaterial3D();
+                material.MetallicSpecular = 0;
+                Texture2D faceTexture = GetTextureFromFiles(files, faceTextureName);
+                if (faceTexture != null)
+                {
+                    material.AlbedoTexture = faceTexture;
+                    material.TextureFilter = BaseMaterial3D.TextureFilterEnum.Linear;
+                    material.DiffuseMode = BaseMaterial3D.DiffuseModeEnum.Burley;
+                    material.ShadingMode = StandardMaterial3D.ShadingModeEnum.PerPixel;
+                    material.CullMode = BaseMaterial3D.CullModeEnum.Back;
+                    if (modelsClassName.ContainsKey(modelIdx) && modelsClassName[modelIdx] == "func_wall")
+                    {
+                        material.Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor;
+                    }
+                    // Emissive material
+                    if (faceTextureName.StartsWith("~"))
+                    {
+                        material.ShadingMode = StandardMaterial3D.ShadingModeEnum.PerPixel;
+                        material.EmissionEnabled = true;
+                        material.Emission = new Color(1, 1, 1);
+                        material.EmissionEnergyMultiplier = 0.5f;
+                    }
+                }
+                else
+                {
+                    material.AlbedoTexture = NotFoundMaterial.AlbedoTexture;
+                    GD.Print("Texture '" + faceTextureName + "' not found !");
+                }
+                material.DetailEnabled = true;
+                material.DetailBlendMode = BaseMaterial3D.BlendModeEnum.Mul;
+                material.DetailAlbedo = face.lightmapTexture;
+                material.DetailUVLayer = BaseMaterial3D.DetailUV.UV2;
+                surfaceTool = new SurfaceTool();
+                surfaceTool.Begin(Mesh.PrimitiveType.Triangles);
+                surfaceTool.SetMaterial(material.Duplicate() as Material);
+                surfaceTools[faceTextureName] = surfaceTool;
+            }
+            // Compute triangles from face vertices
+            Vector3[] triFanVertices = face.BuildTriFanVertices(bsp);
+            //We send the surface to sftool
+            for (int i = 0; i < triFanVertices.Length - 2; i++)
+            {
+                for (int summit = 0; summit < 3; summit++)
+                {
+                    int trivertIndex = GetSummitVertIndex(-1, i, summit);
+                    surfaceTool.SetUV(face.faceUVs[trivertIndex]);
+                    surfaceTool.SetUV2(face.lightmapUVs[trivertIndex]);
+                    surfaceTool.SetNormal(bsp.Planes[face.bspFace.Plane].Normal.ToSGodotVector3());
+                    surfaceTool.AddVertex(triFanVertices[trivertIndex]);
+                }
+            }
+        }
+        return surfaceTools;
+    }
+    
+    public Node3D BuildGDLevel(Array<Asset> files, String shading)
+    {
+        try {
+            PreParseEntities();
+            // Level
+            Node3D mapNode = new Node3D();
+            mapNode.Name = "Map";
+            ArrayMesh skyMesh = null;
+            for (int modelIdx = 0; modelIdx < bsp.Models.Count; modelIdx++) {
+                Dictionary<string, SurfaceTool> surfaceTools = BuildModelFaces(files, modelIdx);
+                // Start building model tree
+                if (surfaceTools.Keys.Count == 0) // Is a entity brush
+                { 
+                    // Compute BBOX
+                    BoxShape3D bboxShape = new BoxShape3D();
+                    var mins = bsp.Models[modelIdx].Mins;
+                    var maxs = bsp.Models[modelIdx].Maxs;
+                    bboxShape.Size = new Vector3(maxs.X - mins.X, maxs.Y - mins.Y, maxs.Z - mins.Z).ToSGodotVector3().Abs();
+                    // create and position Model
+                    StaticBody3D modelNode = new StaticBody3D();
+                    modelNode.Name = "Model" + modelIdx.ToString();
+                    modelNode.Position = mins.ToSGodotVector3().Lerp(maxs.ToSGodotVector3(), 0.5f);
+                    modelNode.CollisionLayer = WorldCollisionLayer | PlayerCollisionLayer; 
+                    modelNode.CollisionMask = WorldCollisionLayer | PlayerCollisionLayer;
+                    mapNode.AddChild(modelNode);
+                    // Generate Collision from mins/maxs
+                    CollisionShape3D collider = new CollisionShape3D();
+                    collider.Name = "CollisionShape";
+                    collider.Shape = bboxShape;
+                    modelNode.AddChild(collider);
+                }
+                else //Is a brush
+                {
+                    ArrayMesh modelMesh = null;
+                    foreach (string textureName in surfaceTools.Keys)
+                    {
+                        surfaceTools[textureName].GenerateTangents();
+                        // We extract Sky in a separate mesh
+                        if (textureName == "sky")
+                            skyMesh = surfaceTools[textureName].Commit(skyMesh);
+                        else
+                            modelMesh = surfaceTools[textureName].Commit(modelMesh);
+                    }
+                    // Generate model mesh
+                    uint collisionLayers = WorldCollisionLayer | PlayerCollisionLayer;
+                    if (modelsClassName.ContainsKey(modelIdx) && modelsClassName[modelIdx] == "func_wall") {
+                        // If is a func_wall, bullets go through
+                    } else {
+                         collisionLayers = collisionLayers | ProjectilesCollisionLayer;
+                    }
+                    Node3D modelNode = CreateBodyNode(modelMesh, true, collisionLayers);
+                    modelNode.Name = "Model" + modelIdx.ToString();
+                    mapNode.AddChild(modelNode);
+                }
+            }
+            // Generate sky mesh if necessary
+            if (skyMesh != null) {
+                Node3D skyNode = CreateBodyNode(skyMesh, false, PlayerCollisionLayer);
+                skyNode.Name = "Sky";
+                mapNode.AddChild(skyNode);
+            }
+            // Parse entities
+            ParseEntities(mapNode, files, shading);
+            return mapNode;
+        } catch (Exception e) {
+            GD.Print(e);
+            return null;
+        }
+    }
+
+    public void PreParseEntities()
+    {
+        modelsClassName = new Dictionary<int, String>();
+        foreach (GEntity entity in entities)
+        {
+            // Entity has a internal use
+            if (entity.ClassName != "")
+            {
+                // Contains BSP generic data
+                if (entity.ClassName == "worldspawn")
+                {
+                    if (entity.Get<string>("skyname", null) != null)
+                    {
+                        skyName = entity.Get<string>("skyname", null);
+                    }
+                }
+                // Entity is not a point, register class
+                else if (entity.Get<string>("model", "").StartsWith("*"))
+                {
+                    int modelNumber = int.Parse(entity.Get<string>("model", null).Replace("*", ""));
+                    modelsClassName[modelNumber] = entity.ClassName;
+                }
+            }
+        }
+    }
+
+    public void ParseEntities(Node3D mapNode, Array<Asset> files, String shading)
+    {
+        Dictionary<string, GEntity> targets = new Dictionary<string, GEntity>();
+        // lets do magic
+        foreach (GEntity entity in entities)
+        {
+            Node3D entityNode = null;
+            Node3D child = null;
+            // Entity has a internal use
+            if (entity.ClassName != "")
+            {
+                // Basic light
+                if (entity.ClassName == "light")
+                {
+                    OmniLight3D light = new OmniLight3D();
+                    string[] color = entity.Get<string>("_light", null).Trim().Split(" ");
+                    if (color.Length < 4)
+                        continue;
+                    light.LightColor = new Color(int.Parse(color[0]) / 255.0f, int.Parse(color[1]) / 255.0f, int.Parse(color[2]) / 255.0f);
+                    entityNode = light;
+                    //Set layer for viewmodel
+                    light.SetLayerMaskValue(2, true);
+                }
+                // Light Spot
+                else if (entity.ClassName == "light_spot")
+                {
+                    SpotLight3D light = new SpotLight3D();
+                    string[] color = entity.Get<string>("_light", null).Trim().Split(" ");
+                    if (color.Length < 4)
+                        continue;
+                    light.LightColor = new Color(int.Parse(color[0]) / 255.0f, int.Parse(color[1]) / 255.0f, int.Parse(color[2]) / 255.0f);
+                    entityNode = light;
+                    //Set layer for viewmodel
+                    light.SetLayerMaskValue(2, true);
+                }
+                // Env light (Sun)
+                else if (entity.ClassName == "light_environment")
+                {
+                    DirectionalLight3D light = new DirectionalLight3D();
+                    light.Name = "light_environment";
+                    light.Visible = false; // Only dynamic has sun
+                    light.ShadowEnabled = true;
+                    string[] color = entity.Get<string>("_light", null).Trim().Split(" ");
+                    string[] angles = entity.Get<string>("angles", null).Replace(".", ",").Split(" ");
+                    if (color.Length < 4)
+                        continue;
+                    light.LightColor = new Color(int.Parse(color[0]) / 255.0f, int.Parse(color[1]) / 255.0f, int.Parse(color[2]) / 255.0f);
+                    light.Rotation = new Vector3((Mathf.Pi / 180) * float.Parse(angles[0]), (Mathf.Pi / 180) * float.Parse(angles[1]), (Mathf.Pi / 180) * float.Parse(angles[2]));
+                    entityNode = light;
+                    //Set layer for viewmodel
+                    light.SetLayerMaskValue(2, true);
+                }
+                // TDM Spawns (info_player_start is team 1, info_player_deathmatch is team 2 for some reason, and spawn dm are only used in FFA)
+                else if (entity.ClassName == "spawn_deathmatch" || entity.ClassName == "info_player_start" || entity.ClassName == "info_player_deathmatch")
+                {
+                    string[] vecs = entity.Get<string>("origin", null).Replace(".", ",").Split(" ");
+                    Node3D spawn = new Node3D();
+                    spawn.Position = new Vector3(float.Parse(vecs[0]), float.Parse(vecs[1]), float.Parse(vecs[2])).ToSGodotVector3();
+                    entityNode = spawn;
+                }
+                // Entity is not a point
+                else if (entity.Get<string>("model", "").StartsWith("*"))
+                {
+                    string modelName = "Model" + entity.Get<string>("model", null).Replace("*", "");
+                    entityNode = mapNode.GetNode(modelName) as Node3D;
+                    if (entity.ClassName == "func_ladder")
+                    {
+                        //Attach ladder script
+                        entityNode.SetScript(GD.Load<Script>("res://game/entities/Ladder.gd"));
+                        //Bind signals
+                        entityNode.Call("configure");
+                    }
+                    else if (entity.ClassName == "func_wall")
+                    {
+                        //NOTE: for some reason, on living_room, this is true
+                        //if (entity.Get<int>("rendermode", -1) != -1)
+                        //{
+                        //    var collider = entityNode.GetNode("Collider");
+                        //    collider.QueueFree();
+                        //}
+                        //Set alpha
+                        MeshInstance3D modelMesh = entityNode.GetNode("Mesh") as MeshInstance3D;
+                        int surfaceCount = modelMesh.GetSurfaceOverrideMaterialCount();
+                        for (int surface = 0; surface < surfaceCount; surface++)
+                        {
+                            BaseMaterial3D originalMat = modelMesh.GetActiveMaterial(surface) as BaseMaterial3D;
+                            float opacity = entity.Get<int>("renderamt", 255) / 255f;
+                            originalMat.Transparency = BaseMaterial3D.TransparencyEnum.AlphaDepthPrePass;
+                            originalMat.AlbedoColor = new Color(1.0f, 1.0f, 1.0f, opacity);
+                            modelMesh.SetSurfaceOverrideMaterial(surface, originalMat);
+                        }
+                    }
+                    else if (entity.ClassName == "func_water")
+                    {
+                        //Turn into an area
+                        Area3D areaNode = new Area3D();
+                        areaNode.Name = modelName;
+                        entityNode.Name += "_d";
+                        areaNode.CollisionLayer = 2; // 2 are player world colliders
+                        areaNode.CollisionMask = 2; // 2 are player world colliders
+                        mapNode.AddChild(areaNode);
+                        //Transfer mesh
+                        MeshInstance3D modelMesh = entityNode.GetNode("Mesh") as MeshInstance3D;
+                        entityNode.RemoveChild(modelMesh);
+                        areaNode.AddChild(modelMesh);
+                        //Create convex collision shape to handle volume collision
+                        CollisionShape3D collider = new CollisionShape3D();
+                        collider.Name = "CollisionShape";
+                        collider.Shape = modelMesh.Mesh.CreateConvexShape();
+                        areaNode.AddChild(collider);
+                        //Set Alpha
+                        int surfaceCount = modelMesh.GetSurfaceOverrideMaterialCount();
+                        for (int surface = 0; surface < surfaceCount; surface++)
+                        {
+                            BaseMaterial3D originalMat = modelMesh.GetActiveMaterial(surface) as BaseMaterial3D;
+                            float opacity = 0.95f;
+                            originalMat.Transparency = BaseMaterial3D.TransparencyEnum.AlphaDepthPrePass;
+                            originalMat.AlbedoColor = new Color(1.0f, 1.0f, 1.0f, opacity);
+                            originalMat.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
+                            modelMesh.SetSurfaceOverrideMaterial(surface, originalMat);
+                        }
+                        //Free old node, and its nested concave collider
+                        entityNode.QueueFree();
+                        //Attach water script
+                        areaNode.SetScript(GD.Load<Script>("res://game/entities/Water.gd"));
+                        //Bind signals
+                        areaNode.Call("configure");
+                    }
+                    else if (entity.ClassName == "func_illusionary")
+                    {
+                        //Delete collider
+                        var collider = entityNode.GetNode("CollisionShape");
+                        collider.QueueFree();
+                        //Set alpha
+                        MeshInstance3D modelMesh = entityNode.GetNode("Mesh") as MeshInstance3D;
+                        int surfaceCount = modelMesh.GetSurfaceOverrideMaterialCount();
+                        for (int surface = 0; surface < surfaceCount; surface++)
+                        {
+                            BaseMaterial3D originalMat = modelMesh.GetActiveMaterial(surface) as BaseMaterial3D;
+                            float opacity = entity.Get<int>("renderamt", 255) / 255f;
+                            originalMat.Transparency = BaseMaterial3D.TransparencyEnum.AlphaDepthPrePass;
+                            originalMat.AlbedoColor = new Color(1.0f, 1.0f, 1.0f, opacity);
+                            modelMesh.SetSurfaceOverrideMaterial(surface, originalMat);
+                        }
+                    }
+                    else if (entity.ClassName == "func_breakable")
+                    {
+                        //Breakables are not supported, we only make it "non-collidable", with some alpha
+                        var collider = entityNode.GetNode("CollisionShape");
+                        collider.QueueFree();
+                        //Set alpha
+                        MeshInstance3D modelMesh = entityNode.GetNode("Mesh") as MeshInstance3D;
+                        int surfaceCount = modelMesh.GetSurfaceOverrideMaterialCount();
+                        for (int surface = 0; surface < surfaceCount; surface++)
+                        {
+                            BaseMaterial3D originalMat = modelMesh.GetActiveMaterial(surface) as BaseMaterial3D;
+                            float opacity = 0.9f;
+                            originalMat.Transparency = BaseMaterial3D.TransparencyEnum.AlphaDepthPrePass;
+                            originalMat.AlbedoColor = new Color(1.0f, 1.0f, 1.0f, opacity);
+                            modelMesh.SetSurfaceOverrideMaterial(surface, originalMat);
+                        }
+                    }
+                    else if (entity.ClassName == "func_weather")
+                    {
+                        var emitter = GD.Load<PackedScene>("res://game/entities/Weather/Snow.tscn").Instantiate();
+                        entityNode.AddChild(emitter);
+                        //Configure emitter
+                        emitter.Call("configure");
+                    }
+                    else
+                    {
+                        //This is probably an unsupported entity, so we drop collider if any and hide mesh
+                        var collider = entityNode.GetNode("CollisionShape");
+                        if (collider != null)
+                            collider.QueueFree();
+                        MeshInstance3D modelMesh = entityNode.GetNode("Mesh") as MeshInstance3D;
+                        modelMesh.Visible = false;
+                    }
+                }
+            }
+            // Point entities get placed here
+            if (!entity.Get<string>("model", "").StartsWith("*") && entity.Get<string>("origin", null) != null)
+            {
+                if (entityNode == null)
+                {
+                    entityNode = new Node3D();
+                    entityNode.Name = entity.ClassName;
+                    if (child != null)
+                    {
+                        entityNode.AddChild(child);
+                    }
+                }
+                mapNode.AddChild(entityNode);
+                string[] vecs = entity.Get<string>("origin", null).Replace(".", ",").Split(" ");
+                entityNode.Position = new Vector3(float.Parse(vecs[0]), float.Parse(vecs[1]), float.Parse(vecs[2])).ToSGodotVector3();
+            }
+        }
+    }
+        
+    public static Texture2D GetTextureFromFiles(Array<Asset> files, String textureName)
+    {
+        for (int i = files.Count-1; i >= 0; i--) {
+            if (files[i] != null && files[i].gdTextures.ContainsKey(textureName))
+                return files[i].gdTextures[textureName];
+        }
+        return null;
+    }
+    
+}

@@ -1,7 +1,7 @@
-[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://cecp5bew21qdw"]
+[gd_resource type="ShaderMaterial" format=3 uid="uid://cecp5bew21qdw"]
 
-[ext_resource type="Shader" path="res://shaders/CubemapToEquirectangular.gdshader" id="1_w70j5"]
-[ext_resource type="Texture2D" uid="uid://dor552c3gmhi4" path="res://assets/blackpixel.png" id="2_y6vm3"]
+[ext_resource type="Shader" uid="uid://bk064que7uyqv" path="res://shaders/CubemapToEquirectangular.gdshader" id="1_w70j5"]
+[ext_resource type="Texture2D" uid="uid://dor552c3gmhi4" path="res://sprites/blackpixel.png" id="2_y6vm3"]
 
 [resource]
 shader = ExtResource("1_w70j5")

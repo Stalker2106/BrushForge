@@ -1,22 +1,23 @@
-[gd_scene load_steps=21 format=3 uid="uid://c311sqhtsypw0"]
+[gd_scene format=3 uid="uid://c311sqhtsypw0"]
 
 [ext_resource type="Theme" uid="uid://dnjcqtp4bxqiq" path="res://Theme.tres" id="1_txdw7"]
-[ext_resource type="Script" path="res://scripts/App.gd" id="1_w7gbj"]
-[ext_resource type="Script" path="res://scripts/TitleBar.gd" id="3_1oohy"]
-[ext_resource type="Script" path="res://importers/Metadata.cs" id="3_o71nc"]
-[ext_resource type="Script" path="res://scripts/3DView.gd" id="4_r574j"]
+[ext_resource type="Script" uid="uid://ceckvf4u1phpy" path="res://scripts/App.gd" id="1_w7gbj"]
+[ext_resource type="Script" uid="uid://exn12hgmqagw" path="res://scripts/TitleBar.gd" id="3_1oohy"]
+[ext_resource type="Script" uid="uid://m78eld0kjfl7" path="res://importers/Metadata.cs" id="3_o71nc"]
+[ext_resource type="Script" uid="uid://dc711d8cv5wj4" path="res://scripts/3DView.gd" id="4_r574j"]
 [ext_resource type="PackedScene" uid="uid://bqe5vceku10ff" path="res://prefabs/Camera.tscn" id="5_4mito"]
-[ext_resource type="Script" path="res://scripts/TansformGizmo.gd" id="6_4186l"]
-[ext_resource type="Texture2D" uid="uid://c3l2jlbt4fvbm" path="res://assets/Wireframe.png" id="7_w2248"]
-[ext_resource type="Texture2D" uid="uid://xiffgpg61xpa" path="res://assets/Shaded.png" id="8_rngdq"]
-[ext_resource type="Texture2D" uid="uid://d3xhssevy46uo" path="res://assets/Texturized.png" id="9_6ln17"]
-[ext_resource type="PackedScene" uid="uid://d4g3aeu7mo0v3" path="res://assets/TransformGIzmo.glb" id="10_p7x03"]
-[ext_resource type="Texture2D" uid="uid://d3claeraj5wk4" path="res://assets/crosshair.png" id="11_862x4"]
-[ext_resource type="Script" path="res://scripts/Inspector.gd" id="13_ortvp"]
-[ext_resource type="Texture2D" uid="uid://ct6krfvslra0v" path="res://assets/BrushForgeFull.png" id="14_eu4wb"]
-[ext_resource type="Texture2D" uid="uid://cwygddmmj18jr" path="res://assets/Missing.png" id="15_wk7mf"]
+[ext_resource type="Script" uid="uid://d3c1g0cavihtj" path="res://scripts/TansformGizmo.gd" id="6_4186l"]
+[ext_resource type="Texture2D" uid="uid://c3l2jlbt4fvbm" path="res://sprites/Wireframe.png" id="7_w2248"]
+[ext_resource type="Texture2D" uid="uid://xiffgpg61xpa" path="res://sprites/Shaded.png" id="8_rngdq"]
+[ext_resource type="Texture2D" uid="uid://d3xhssevy46uo" path="res://sprites/Texturized.png" id="9_6ln17"]
+[ext_resource type="PackedScene" uid="uid://d4g3aeu7mo0v3" path="res://sprites/TransformGIzmo.glb" id="10_p7x03"]
+[ext_resource type="Texture2D" uid="uid://d3claeraj5wk4" path="res://sprites/crosshair.png" id="11_862x4"]
+[ext_resource type="Script" uid="uid://bnuxv3m2vxw4y" path="res://scripts/Inspector.gd" id="13_ortvp"]
+[ext_resource type="Texture2D" uid="uid://ct6krfvslra0v" path="res://sprites/BrushForgeFull.png" id="14_eu4wb"]
+[ext_resource type="Texture2D" uid="uid://cwygddmmj18jr" path="res://sprites/Missing.png" id="15_wk7mf"]
 [ext_resource type="PackedScene" uid="uid://ndjisg7fxapk" path="res://prefabs/FileContentDialog.tscn" id="16_rmtiy"]
-[ext_resource type="Script" path="res://scripts/InfoOverlay.gd" id="17_o6b1d"]
+[ext_resource type="Script" uid="uid://csfrr0mhlok0" path="res://scripts/InfoOverlay.gd" id="17_o6b1d"]
+[ext_resource type="Script" uid="uid://bjajrmvgptxok" path="res://scripts/PreferencesDialog.gd" id="17_xp1au"]
 [ext_resource type="Material" uid="uid://cecp5bew21qdw" path="res://materials/CubemapMaterial.tres" id="18_vri0h"]
 
 [sub_resource type="VoxelGIData" id="VoxelGIData_eon4g"]
@@ -29,7 +30,7 @@ background_color = Color(1, 1, 1, 1)
 ambient_light_source = 2
 ambient_light_color = Color(1, 1, 1, 1)
 
-[node name="App" type="Control"]
+[node name="App" type="Control" unique_id=1150941421]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -39,10 +40,10 @@ grow_vertical = 2
 theme = ExtResource("1_txdw7")
 script = ExtResource("1_w7gbj")
 
-[node name="Importer" type="Node" parent="."]
+[node name="Importer" type="Node" parent="." unique_id=1418337645]
 script = ExtResource("3_o71nc")
 
-[node name="BG" type="ColorRect" parent="."]
+[node name="BG" type="ColorRect" parent="." unique_id=1299838143]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -51,7 +52,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.192157, 0.192157, 0.192157, 1)
 
-[node name="Layout" type="VSplitContainer" parent="."]
+[node name="Layout" type="VSplitContainer" parent="." unique_id=981561653]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -59,23 +60,23 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CenterLayout" type="HSplitContainer" parent="Layout"]
+[node name="CenterLayout" type="HSplitContainer" parent="Layout" unique_id=595171282]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Main" type="VBoxContainer" parent="Layout/CenterLayout"]
+[node name="Main" type="VBoxContainer" parent="Layout/CenterLayout" unique_id=99565321]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Top" type="HBoxContainer" parent="Layout/CenterLayout/Main"]
+[node name="Top" type="HBoxContainer" parent="Layout/CenterLayout/Main" unique_id=395591774]
 layout_mode = 2
 
-[node name="TitleBar" type="MenuBar" parent="Layout/CenterLayout/Main/Top"]
+[node name="TitleBar" type="MenuBar" parent="Layout/CenterLayout/Main/Top" unique_id=655544762]
 layout_mode = 2
 flat = true
 script = ExtResource("3_1oohy")
 
-[node name="File" type="PopupMenu" parent="Layout/CenterLayout/Main/Top/TitleBar"]
+[node name="File" type="PopupMenu" parent="Layout/CenterLayout/Main/Top/TitleBar" unique_id=1991526930]
 item_count = 4
 item_0/text = "Import File(s)..."
 item_0/id = 0
@@ -86,31 +87,31 @@ item_2/id = 2
 item_3/text = "Load Next Map"
 item_3/id = 3
 
-[node name="View" type="PopupMenu" parent="Layout/CenterLayout/Main/Top/TitleBar"]
+[node name="View" type="PopupMenu" parent="Layout/CenterLayout/Main/Top/TitleBar" unique_id=1108897870]
 
-[node name="About" type="PopupMenu" parent="Layout/CenterLayout/Main/Top/TitleBar"]
+[node name="About" type="PopupMenu" parent="Layout/CenterLayout/Main/Top/TitleBar" unique_id=1051003138]
 item_count = 1
 item_0/text = "BrushForge"
 item_0/id = 0
 
-[node name="Control" type="Control" parent="Layout/CenterLayout/Main/Top"]
+[node name="Control" type="Control" parent="Layout/CenterLayout/Main/Top" unique_id=1887121580]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Label" type="Label" parent="Layout/CenterLayout/Main/Top"]
+[node name="Label" type="Label" parent="Layout/CenterLayout/Main/Top" unique_id=1080712662]
 layout_mode = 2
 text = "3D View Level:"
 
-[node name="LevelSelect" type="OptionButton" parent="Layout/CenterLayout/Main/Top"]
+[node name="LevelSelect" type="OptionButton" parent="Layout/CenterLayout/Main/Top" unique_id=614983914]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 
-[node name="Views" type="Control" parent="Layout/CenterLayout/Main"]
+[node name="Views" type="Control" parent="Layout/CenterLayout/Main" unique_id=620446409]
 clip_contents = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="3DView" type="SubViewportContainer" parent="Layout/CenterLayout/Main/Views"]
+[node name="3DView" type="SubViewportContainer" parent="Layout/CenterLayout/Main/Views" unique_id=1018026498]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -122,24 +123,24 @@ size_flags_vertical = 3
 stretch = true
 script = ExtResource("4_r574j")
 
-[node name="World" type="SubViewport" parent="Layout/CenterLayout/Main/Views/3DView"]
+[node name="World" type="SubViewport" parent="Layout/CenterLayout/Main/Views/3DView" unique_id=1000709070]
 handle_input_locally = false
 audio_listener_enable_2d = true
 audio_listener_enable_3d = true
 size = Vector2i(968, 593)
 render_target_update_mode = 4
 
-[node name="Camera" parent="Layout/CenterLayout/Main/Views/3DView/World" instance=ExtResource("5_4mito")]
+[node name="Camera" parent="Layout/CenterLayout/Main/Views/3DView/World" unique_id=1158493632 instance=ExtResource("5_4mito")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.75, 0.75, -5.5)
 motion_mode = 0
 
-[node name="Container" type="Node3D" parent="Layout/CenterLayout/Main/Views/3DView/World"]
+[node name="Container" type="Node3D" parent="Layout/CenterLayout/Main/Views/3DView/World" unique_id=444426957]
 
-[node name="VoxelGI" type="VoxelGI" parent="Layout/CenterLayout/Main/Views/3DView/World"]
+[node name="VoxelGI" type="VoxelGI" parent="Layout/CenterLayout/Main/Views/3DView/World" unique_id=1128716331]
 size = Vector3(200, 200, 200)
 data = SubResource("VoxelGIData_eon4g")
 
-[node name="Crosshair" type="TextureRect" parent="Layout/CenterLayout/Main/Views"]
+[node name="Crosshair" type="TextureRect" parent="Layout/CenterLayout/Main/Views" unique_id=1858406245]
 visible = false
 texture_filter = 1
 layout_mode = 1
@@ -157,7 +158,7 @@ grow_vertical = 2
 texture = ExtResource("11_862x4")
 stretch_mode = 3
 
-[node name="Sidebar" type="VBoxContainer" parent="Layout/CenterLayout/Main/Views"]
+[node name="Sidebar" type="VBoxContainer" parent="Layout/CenterLayout/Main/Views" unique_id=347679841]
 layout_mode = 1
 anchors_preset = 11
 anchor_left = 1.0
@@ -166,35 +167,35 @@ anchor_bottom = 1.0
 grow_horizontal = 0
 grow_vertical = 2
 
-[node name="TopRight" type="HBoxContainer" parent="Layout/CenterLayout/Main/Views/Sidebar"]
+[node name="TopRight" type="HBoxContainer" parent="Layout/CenterLayout/Main/Views/Sidebar" unique_id=1000212476]
 layout_mode = 2
 alignment = 2
 
-[node name="TansformGizmo" type="SubViewportContainer" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight"]
+[node name="TansformGizmo" type="SubViewportContainer" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight" unique_id=700688593]
 custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
 size_flags_horizontal = 8
 stretch = true
 script = ExtResource("6_4186l")
 
-[node name="World" type="SubViewport" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/TansformGizmo"]
+[node name="World" type="SubViewport" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/TansformGizmo" unique_id=2018423448]
 own_world_3d = true
 transparent_bg = true
 handle_input_locally = false
 size = Vector2i(100, 100)
 render_target_update_mode = 4
 
-[node name="Gizmo" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/TansformGizmo/World" instance=ExtResource("10_p7x03")]
+[node name="Gizmo" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/TansformGizmo/World" unique_id=1479886486 instance=ExtResource("10_p7x03")]
 
-[node name="Camera" type="Camera3D" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/TansformGizmo/World"]
+[node name="Camera" type="Camera3D" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/TansformGizmo/World" unique_id=1286373103]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.85)
 environment = SubResource("Environment_p5trv")
 fov = 60.0
 
-[node name="Shading" type="VBoxContainer" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight"]
+[node name="Shading" type="VBoxContainer" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight" unique_id=1740426182]
 layout_mode = 2
 
-[node name="WireframeBtn" type="TextureButton" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/Shading"]
+[node name="WireframeBtn" type="TextureButton" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/Shading" unique_id=1158156253]
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 size_flags_horizontal = 8
@@ -202,7 +203,7 @@ texture_normal = ExtResource("7_w2248")
 ignore_texture_size = true
 stretch_mode = 5
 
-[node name="ShadedBtn" type="TextureButton" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/Shading"]
+[node name="ShadedBtn" type="TextureButton" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/Shading" unique_id=1368177432]
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 size_flags_horizontal = 8
@@ -210,7 +211,7 @@ texture_normal = ExtResource("8_rngdq")
 ignore_texture_size = true
 stretch_mode = 5
 
-[node name="TexturizedBtn" type="TextureButton" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/Shading"]
+[node name="TexturizedBtn" type="TextureButton" parent="Layout/CenterLayout/Main/Views/Sidebar/TopRight/Shading" unique_id=373924918]
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 size_flags_horizontal = 8
@@ -218,77 +219,83 @@ texture_normal = ExtResource("9_6ln17")
 ignore_texture_size = true
 stretch_mode = 5
 
-[node name="Control" type="Control" parent="Layout/CenterLayout/Main/Views/Sidebar"]
+[node name="Control" type="Control" parent="Layout/CenterLayout/Main/Views/Sidebar" unique_id=448883665]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CoordinatesLabel" type="Label" parent="Layout/CenterLayout/Main/Views/Sidebar"]
+[node name="CoordinatesLabel" type="Label" parent="Layout/CenterLayout/Main/Views/Sidebar" unique_id=1960253315]
 layout_mode = 2
 size_flags_horizontal = 8
 horizontal_alignment = 2
 
-[node name="CubemapConverter" type="SubViewport" parent="Layout/CenterLayout/Main/Views"]
+[node name="CubemapConverter" type="SubViewport" parent="Layout/CenterLayout/Main/Views" unique_id=1498143557]
 
-[node name="Canvas" type="ColorRect" parent="Layout/CenterLayout/Main/Views/CubemapConverter"]
+[node name="Canvas" type="ColorRect" parent="Layout/CenterLayout/Main/Views/CubemapConverter" unique_id=2117809256]
 material = ExtResource("18_vri0h")
 offset_right = 40.0
 offset_bottom = 40.0
 
-[node name="TabContainer" type="TabContainer" parent="Layout/CenterLayout"]
+[node name="TabContainer" type="TabContainer" parent="Layout/CenterLayout" unique_id=168901335]
 clip_contents = true
 custom_minimum_size = Vector2(220, 0)
 layout_mode = 2
 tab_alignment = 1
+current_tab = 0
 
-[node name="Inspector" type="VBoxContainer" parent="Layout/CenterLayout/TabContainer"]
+[node name="Inspector" type="VBoxContainer" parent="Layout/CenterLayout/TabContainer" unique_id=1044955681]
 layout_mode = 2
 script = ExtResource("13_ortvp")
+metadata/_tab_index = 0
 
-[node name="ScrollContainer" type="ScrollContainer" parent="Layout/CenterLayout/TabContainer/Inspector"]
+[node name="ScrollContainer" type="ScrollContainer" parent="Layout/CenterLayout/TabContainer/Inspector" unique_id=325908452]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Layout" type="VBoxContainer" parent="Layout/CenterLayout/TabContainer/Inspector/ScrollContainer"]
+[node name="Layout" type="VBoxContainer" parent="Layout/CenterLayout/TabContainer/Inspector/ScrollContainer" unique_id=1290213861]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="TexturePreview" type="TextureRect" parent="Layout/CenterLayout/TabContainer/Inspector/ScrollContainer/Layout"]
+[node name="TexturePreview" type="TextureRect" parent="Layout/CenterLayout/TabContainer/Inspector/ScrollContainer/Layout" unique_id=213054845]
 custom_minimum_size = Vector2(0, 300)
 layout_mode = 2
 texture = ExtResource("15_wk7mf")
+expand_mode = 1
 stretch_mode = 5
 
-[node name="IdentifierLabel" type="Label" parent="Layout/CenterLayout/TabContainer/Inspector/ScrollContainer/Layout"]
+[node name="IdentifierLabel" type="Label" parent="Layout/CenterLayout/TabContainer/Inspector/ScrollContainer/Layout" unique_id=696228489]
 layout_mode = 2
 
-[node name="DataLabel" type="RichTextLabel" parent="Layout/CenterLayout/TabContainer/Inspector/ScrollContainer/Layout"]
+[node name="DataLabel" type="RichTextLabel" parent="Layout/CenterLayout/TabContainer/Inspector/ScrollContainer/Layout" unique_id=579072283]
 layout_mode = 2
 fit_content = true
 
-[node name="Files" type="VBoxContainer" parent="Layout/CenterLayout/TabContainer"]
+[node name="Files" type="VBoxContainer" parent="Layout/CenterLayout/TabContainer" unique_id=1496062971]
 visible = false
 layout_mode = 2
+metadata/_tab_index = 1
 
-[node name="ScrollContainer" type="ScrollContainer" parent="Layout/CenterLayout/TabContainer/Files"]
+[node name="ScrollContainer" type="ScrollContainer" parent="Layout/CenterLayout/TabContainer/Files" unique_id=2107694300]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="FilesList" type="Tree" parent="Layout/CenterLayout/TabContainer/Files/ScrollContainer"]
+[node name="FilesList" type="Tree" parent="Layout/CenterLayout/TabContainer/Files/ScrollContainer" unique_id=1432520578]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="TabContainer" type="TabContainer" parent="Layout"]
+[node name="TabContainer" type="TabContainer" parent="Layout" unique_id=866026024]
 custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
+current_tab = 0
 
-[node name="Logs" type="ScrollContainer" parent="Layout/TabContainer"]
+[node name="Logs" type="ScrollContainer" parent="Layout/TabContainer" unique_id=1643364894]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 vertical_scroll_mode = 2
+metadata/_tab_index = 0
 
-[node name="LogLabel" type="RichTextLabel" parent="Layout/TabContainer/Logs"]
+[node name="LogLabel" type="RichTextLabel" parent="Layout/TabContainer/Logs" unique_id=965938724]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -298,7 +305,7 @@ scroll_following = true
 selection_enabled = true
 deselect_on_focus_loss_enabled = false
 
-[node name="AboutDialog" type="Window" parent="."]
+[node name="AboutDialog" type="Window" parent="." unique_id=1940159585]
 title = "About BrushForge"
 initial_position = 2
 size = Vector2i(750, 350)
@@ -307,7 +314,7 @@ exclusive = true
 unresizable = true
 always_on_top = true
 
-[node name="VBoxContainer" type="VBoxContainer" parent="AboutDialog"]
+[node name="VBoxContainer" type="VBoxContainer" parent="AboutDialog" unique_id=2068866043]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -316,14 +323,14 @@ grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="TextureRect" type="TextureRect" parent="AboutDialog/VBoxContainer"]
+[node name="TextureRect" type="TextureRect" parent="AboutDialog/VBoxContainer" unique_id=363891047]
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 texture = ExtResource("14_eu4wb")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="RichTextLabel" type="RichTextLabel" parent="AboutDialog/VBoxContainer"]
+[node name="RichTextLabel" type="RichTextLabel" parent="AboutDialog/VBoxContainer" unique_id=1577658314]
 layout_mode = 2
 bbcode_enabled = true
 text = "[center]v1.0.0[/center]
@@ -333,12 +340,15 @@ text = "[center]v1.0.0[/center]
 [rainbow freq=0.1 sat=0.8 val=0.8]Developed by Stalker2106[/rainbow][/center]"
 fit_content = true
 
-[node name="PreferencesDialog" type="Window" parent="."]
+[node name="PreferencesDialog" type="Window" parent="." unique_id=191016409]
 initial_position = 2
 size = Vector2i(500, 500)
 visible = false
+transient = true
+exclusive = true
+script = ExtResource("17_xp1au")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="PreferencesDialog"]
+[node name="Layout" type="VBoxContainer" parent="PreferencesDialog" unique_id=1898267535]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -347,41 +357,46 @@ grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Label" type="Label" parent="PreferencesDialog/VBoxContainer"]
+[node name="Label" type="Label" parent="PreferencesDialog/Layout" unique_id=710844335]
 layout_mode = 2
 text = "Preferences"
 horizontal_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="PreferencesDialog/VBoxContainer"]
+[node name="GamePath" type="HBoxContainer" parent="PreferencesDialog/Layout" unique_id=1697459203]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="PreferencesDialog/VBoxContainer/HBoxContainer"]
+[node name="Label" type="Label" parent="PreferencesDialog/Layout/GamePath" unique_id=787718693]
 layout_mode = 2
 text = "Game Path"
 
-[node name="LineEdit" type="LineEdit" parent="PreferencesDialog/VBoxContainer/HBoxContainer"]
+[node name="LineEdit" type="LineEdit" parent="PreferencesDialog/Layout/GamePath" unique_id=1499380074]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Button" type="Button" parent="PreferencesDialog/VBoxContainer/HBoxContainer"]
+[node name="BrowseButton" type="Button" parent="PreferencesDialog/Layout/GamePath" unique_id=886713641]
 layout_mode = 2
 text = "..."
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="PreferencesDialog/VBoxContainer"]
+[node name="Spacer" type="Control" parent="PreferencesDialog/Layout" unique_id=28680207]
 layout_mode = 2
+size_flags_vertical = 3
 
-[node name="Button" type="Button" parent="PreferencesDialog/VBoxContainer/HBoxContainer2"]
+[node name="Buttons" type="HBoxContainer" parent="PreferencesDialog/Layout" unique_id=1797134025]
+layout_mode = 2
+alignment = 1
+
+[node name="ApplyButton" type="Button" parent="PreferencesDialog/Layout/Buttons" unique_id=105327657]
 layout_mode = 2
 text = "Apply"
 
-[node name="Button2" type="Button" parent="PreferencesDialog/VBoxContainer/HBoxContainer2"]
+[node name="CancelButton" type="Button" parent="PreferencesDialog/Layout/Buttons" unique_id=1203017044]
 layout_mode = 2
 text = "Cancel"
 
-[node name="FileContentDialog" parent="." instance=ExtResource("16_rmtiy")]
+[node name="FileContentDialog" parent="." unique_id=1792467400 instance=ExtResource("16_rmtiy")]
 visible = false
 
-[node name="FileDialog" type="FileDialog" parent="."]
+[node name="FileDialog" type="FileDialog" parent="." unique_id=1927994112]
 title = "Open File(s)"
 initial_position = 2
 size = Vector2i(600, 400)
@@ -392,7 +407,7 @@ access = 2
 filters = PackedStringArray("*.bsp, *.wad, *.mdl, *.spr, *.bmp, *.wav ; Supported Files")
 use_native_dialog = true
 
-[node name="DependencyLoadDialog" type="ConfirmationDialog" parent="."]
+[node name="DependencyLoadDialog" type="ConfirmationDialog" parent="." unique_id=2089586858]
 title = "Load Asset Dependency"
 initial_position = 2
 size = Vector2i(690, 106)
@@ -401,7 +416,7 @@ dialog_text = "The loaded asset relies on dependencies, do you want to proceed w
 NOTE: Skipping import may result in missing textures, sounds or scripts."
 cancel_button_text = "Skip"
 
-[node name="FolderDialog" type="FileDialog" parent="."]
+[node name="FolderDialog" type="FileDialog" parent="." unique_id=785404298]
 title = "Open a Directory"
 initial_position = 2
 size = Vector2i(600, 400)
@@ -412,7 +427,7 @@ access = 2
 filters = PackedStringArray("All Folders")
 use_native_dialog = true
 
-[node name="InfoOverlay" type="PanelContainer" parent="."]
+[node name="InfoOverlay" type="PanelContainer" parent="." unique_id=1021455924]
 visible = false
 layout_mode = 0
 offset_left = 972.0
@@ -422,10 +437,10 @@ offset_bottom = 92.0
 mouse_filter = 1
 script = ExtResource("17_o6b1d")
 
-[node name="Timer" type="Timer" parent="InfoOverlay"]
+[node name="Timer" type="Timer" parent="InfoOverlay" unique_id=393459731]
 one_shot = true
 
-[node name="Label" type="Label" parent="InfoOverlay"]
+[node name="Label" type="Label" parent="InfoOverlay" unique_id=1658755979]
 layout_mode = 2
 mouse_filter = 1
 text = "Path/to/file"

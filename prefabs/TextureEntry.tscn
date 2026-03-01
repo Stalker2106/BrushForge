@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://bxvnmhwhgna3x"]
+[gd_scene format=3 uid="uid://bxvnmhwhgna3x"]
 
-[ext_resource type="Texture2D" uid="uid://cwygddmmj18jr" path="res://assets/Missing.png" id="1_a3hik"]
+[ext_resource type="Texture2D" uid="uid://cwygddmmj18jr" path="res://sprites/Missing.png" id="1_a3hik"]
 
 [node name="TextureEntry" type="HBoxContainer"]
 

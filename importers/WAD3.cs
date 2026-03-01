@@ -69,8 +69,9 @@ public partial class WAD3 : DataPack
         }
     }
 
-    override public void Import(FileStream fs, BinaryReader reader, Node app)
+    override public void Import(FileStream fs)
     {
+        BinaryReader reader = new BinaryReader(fs);
         UInt32 dirSize = reader.ReadUInt32();
         UInt32 dirIndex = reader.ReadUInt32();
         // Parse Entries
